@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+    private lateinit var cursorLayout: CursorLayout
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
@@ -38,8 +39,15 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        cursorLayout = CursorLayout(this)
         webView = WebView(this)
-        setContentView(webView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        val params = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        cursorLayout.addView(webView, params)
+        setContentView(cursorLayout)
 
         val settings: WebSettings = webView.settings
         settings.javaScriptEnabled = true
@@ -49,9 +57,6 @@ class MainActivity : Activity() {
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
-        settings.setSupportZoom(true)
-        settings.builtInZoomControls = true
-        settings.displayZoomControls = false
         settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
         webView.webViewClient = object : WebViewClient() {
@@ -79,8 +84,7 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customViewCallback = callback
-                // Sembunyikan webview dan tampilkan custom view (video fullscreen)
-                webView.visibility = View.GONE
+                cursorLayout.visibility = View.GONE
                 val decor = window.decorView as ViewGroup
                 decor.addView(customView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
             }
@@ -90,7 +94,7 @@ class MainActivity : Activity() {
                 val decor = window.decorView as ViewGroup
                 decor.removeView(customView)
                 customView = null
-                webView.visibility = View.VISIBLE
+                cursorLayout.visibility = View.VISIBLE
                 customViewCallback?.onCustomViewHidden()
             }
         }
@@ -101,7 +105,6 @@ class MainActivity : Activity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (customView != null) {
-                // Keluar dari video fullscreen
                 val client = webView.webChromeClient
                 client?.onHideCustomView()
                 return true
