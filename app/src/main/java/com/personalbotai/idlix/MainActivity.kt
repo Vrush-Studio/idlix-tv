@@ -12,8 +12,8 @@ import java.io.ByteArrayInputStream
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+    private lateinit var cursorLayout: CursorLayout
 
-    // Daftar domain iklan, tracker, dan pop-up agresif umum
     private val adHosts = arrayOf(
         "adservice", "doubleclick", "googlesyndication", "googleadservices",
         "adnxs", "ads", "popads", "popcash", "adsterra", "exoclick",
@@ -32,8 +32,11 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        cursorLayout = CursorLayout(this)
         webView = WebView(this)
-        setContentView(webView)
+        cursorLayout.addView(webView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        setContentView(cursorLayout)
 
         val settings: WebSettings = webView.settings
         settings.javaScriptEnabled = true
@@ -47,7 +50,6 @@ class MainActivity : Activity() {
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                 val url = request?.url?.toString() ?: ""
                 if (isAd(url)) {
-                    // Blokir request iklan dengan mengembalikan response kosong
                     return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream("".toByteArray()))
                 }
                 return super.shouldInterceptRequest(view, request)
@@ -55,14 +57,8 @@ class MainActivity : Activity() {
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: ""
-                // Cegah link pop-up membuka browser luar atau tab iklan liar
-                if (isAd(url)) {
-                    return true
-                }
-                if (!url.contains("idlix") && !url.contains("google") && !url.contains("tmdb")) {
-                    // Cegah redirect keluar ke domain iklan baru
-                    return true
-                }
+                if (isAd(url)) return true
+                if (!url.contains("idlix") && !url.contains("google") && !url.contains("tmdb")) return true
                 return false
             }
         }
