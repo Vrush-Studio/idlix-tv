@@ -17,9 +17,9 @@ jobs:
           export PATH=$PWD/gradle-8.4/bin:$PATH
           gradle wrapper
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: idlix-tv-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/debug/*.apk
