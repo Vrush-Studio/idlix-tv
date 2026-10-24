@@ -52,9 +52,8 @@ class MainActivity : Activity() {
         )
         cursorLayout.addView(webView, params)
 
-        // Indikator mode kecil di pojok kanan atas
+        // Indikator mode kursor vs d-pad kecil
         modeIndicator = TextView(this).apply {
-            text = "Mode: Kursor (Tekan Menu untuk D-Pad)"
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.parseColor("#99000000"))
             setPadding(16, 8, 16, 8)
@@ -103,12 +102,6 @@ class MainActivity : Activity() {
                 if (!url.contains("idlix") && !url.contains("google") && !url.contains("tmdb")) return true
                 return false
             }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                // Inject script injection untuk tombol Speed / Fullscreen helper di video HTML5
-                injectVideoHelperScript()
-            }
         }
 
         webView.webChromeClient = object : WebChromeClient() {
@@ -119,9 +112,11 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customViewCallback = callback
-                cursorLayout.visibility = View.GONE
+                
+                // Saat masuk fullscreen video, tetap biarkan kursor virtual berada di atas video
+                webView.visibility = View.GONE
                 val decor = window.decorView as ViewGroup
-                decor.addView(customView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+                decor.addView(customView, 0, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
             }
 
             override fun onHideCustomView() {
@@ -129,49 +124,12 @@ class MainActivity : Activity() {
                 val decor = window.decorView as ViewGroup
                 decor.removeView(customView)
                 customView = null
-                cursorLayout.visibility = View.VISIBLE
+                webView.visibility = View.VISIBLE
                 customViewCallback?.onCustomViewHidden()
             }
         }
 
         webView.loadUrl("https://z2.idlixku.com/")
-    }
-
-    private fun injectVideoHelperScript() {
-        val js = """
-            (function() {
-                if (window.hasSpeedHelper) return;
-                window.hasSpeedHelper = true;
-                
-                // Buat floating menu kecepatan video
-                const div = document.createElement('div');
-                div.style.position = 'fixed';
-                div.style.bottom = '20px';
-                div.style.right = '20px';
-                div.style.zIndex = '999999';
-                div.style.background = 'rgba(0,0,0,0.8)';
-                div.style.padding = '8px 12px';
-                div.style.borderRadius = '8px';
-                div.style.color = '#fff';
-                div.style.fontFamily = 'sans-serif';
-                div.style.fontSize = '14px';
-                div.style.display = 'flex';
-                div.style.gap = '8px';
-                div.style.alignItems = 'center';
-                div.innerHTML = '<span>Speed:</span>' +
-                    '<button onclick="setSpeed(1)" style="background:#333;color:#fff;border:none;padding:4px 8px;border-radius:4px;">1x</button>' +
-                    '<button onclick="setSpeed(1.25)" style="background:#333;color:#fff;border:none;padding:4px 8px;border-radius:4px;">1.25x</button>' +
-                    '<button onclick="setSpeed(1.5)" style="background:#333;color:#fff;border:none;padding:4px 8px;border-radius:4px;">1.5x</button>' +
-                    '<button onclick="setSpeed(2)" style="background:#333;color:#fff;border:none;padding:4px 8px;border-radius:4px;">2x</button>';
-                document.body.appendChild(div);
-
-                window.setSpeed = function(s) {
-                    const vids = document.querySelectorAll('video');
-                    vids.forEach(v => v.playbackRate = s);
-                };
-            })();
-        """
-        webView.evaluateJavascript(js, null)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
