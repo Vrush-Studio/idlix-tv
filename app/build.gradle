@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
 }
 android {
+    namespace 'com.personalbotai.idlix'
     compileSdk 34
     defaultConfig {
         applicationId "com.personalbotai.idlix"
