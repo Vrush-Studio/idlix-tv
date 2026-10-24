@@ -10,8 +10,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Build APK without cache
+      - name: Generate Gradle Wrapper and Build APK
         run: |
+          gradle wrapper --gradle-version 8.4 --no-daemon
+          chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
       - name: Upload APK
         uses: actions/upload-artifact@v4
