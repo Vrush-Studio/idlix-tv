@@ -10,9 +10,12 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Generate Gradle Wrapper and Build APK
+      - name: Download Gradle 8.4 and Build
         run: |
-          gradle wrapper --gradle-version 8.4 --no-daemon
+          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip
+          unzip -q gradle-8.4-bin.zip
+          export PATH=$PWD/gradle-8.4/bin:$PATH
+          gradle wrapper
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
       - name: Upload APK
