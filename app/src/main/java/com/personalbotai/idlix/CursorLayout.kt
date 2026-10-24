@@ -17,11 +17,16 @@ class CursorLayout(context: Context) : FrameLayout(context) {
     private var cursorY = 360f
     private val cursorRadius = 8f
     private var isVisible = false
+    private var isCursorMode = true // true = Virtual Cursor, false = D-Pad Native
     private val handler = Handler(Looper.getMainLooper())
 
+    var onModeToggle: (() -> Unit)? = null
+
     private val hideCursorRunnable = Runnable {
-        isVisible = false
-        invalidate()
+        if (isCursorMode) {
+            isVisible = false
+            invalidate()
+        }
     }
 
     private val paint = Paint().apply {
@@ -42,32 +47,45 @@ class CursorLayout(context: Context) : FrameLayout(context) {
     }
 
     private fun showAndScheduleHide() {
+        if (!isCursorMode) return
         isVisible = true
         invalidate()
         handler.removeCallbacks(hideCursorRunnable)
         handler.postDelayed(hideCursorRunnable, 2500)
     }
 
+    fun toggleMode() {
+        isCursorMode = !isCursorMode
+        isVisible = isCursorMode
+        invalidate()
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
-            // Langkah diperhalus agar pergerakan presisi dan tidak lompat jauh
+            // Tangkap tombol MENU untuk switch mode
+            if (event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_SETTINGS) {
+                toggleMode()
+                onModeToggle?.invoke()
+                return true
+            }
+
+            // Jika mode D-Pad native aktif, serahkan langsung ke WebView/sistem
+            if (!isCursorMode) {
+                return super.dispatchKeyEvent(event)
+            }
+
+            // Mode Virtual Cursor aktif
             val step = 15f
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP -> {
                     cursorY = (cursorY - step).coerceAtLeast(0f)
-                    // Jika kursor mendekati batas atas layar, scroll web perlahan
-                    if (cursorY < 120f) {
-                        scrollWebViewBy(0, -60)
-                    }
+                    if (cursorY < 120f) scrollWebViewBy(0, -60)
                     showAndScheduleHide()
                     return true
                 }
                 KeyEvent.KEYCODE_DPAD_DOWN -> {
                     cursorY = (cursorY + step).coerceAtMost(height.toFloat())
-                    // Jika kursor mendekati batas bawah layar, scroll web perlahan
-                    if (cursorY > height - 120f) {
-                        scrollWebViewBy(0, 60)
-                    }
+                    if (cursorY > height - 120f) scrollWebViewBy(0, 60)
                     showAndScheduleHide()
                     return true
                 }
@@ -114,7 +132,7 @@ class CursorLayout(context: Context) : FrameLayout(context) {
 
     override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
-        if (isVisible) {
+        if (isVisible && isCursorMode) {
             canvas.drawCircle(cursorX, cursorY, cursorRadius, paint)
             canvas.drawCircle(cursorX, cursorY, cursorRadius, borderPaint)
         }
