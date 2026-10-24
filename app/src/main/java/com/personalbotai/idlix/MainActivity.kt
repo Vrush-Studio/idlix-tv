@@ -2,12 +2,14 @@ package com.personalbotai.idlix
 
 import android.app.Activity
 import android.os.Bundle
+import android.view.KeyEvent
+import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.view.KeyEvent
+import android.widget.FrameLayout
 import java.io.ByteArrayInputStream
 
 class MainActivity : Activity() {
@@ -35,7 +37,12 @@ class MainActivity : Activity() {
         
         cursorLayout = CursorLayout(this)
         webView = WebView(this)
-        cursorLayout.addView(webView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        
+        val params = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        cursorLayout.addView(webView, params)
         setContentView(cursorLayout)
 
         val settings: WebSettings = webView.settings
