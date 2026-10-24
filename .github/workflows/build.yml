@@ -10,13 +10,15 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.4
       - name: Build APK
         run: |
-          chmod +x gradlew || true
-          gradle wrapper --gradle-version 8.4 || true
-          ./gradlew assembleRelease
+          gradle assembleRelease
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: idlix-tv-apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: app/build/outputs/apk/release/*.apk
