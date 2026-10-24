@@ -44,7 +44,6 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Kunci agar layar TIDAK PERNAH masuk screensaver atau sleep selama aplikasi IDLIX terbuka
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         cursorLayout = CursorLayout(this)
@@ -120,15 +119,19 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customViewCallback = callback
+                
+                // Masukkan customView (video fullscreen) tepat di bawah lapisan CursorLayout
+                // sehingga CursorLayout dan Kursor Virtual tetap berada DI ATAS video fullscreen
                 webView.visibility = View.GONE
-                val decor = window.decorView as ViewGroup
-                decor.addView(customView, 0, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+                cursorLayout.addView(customView, 0, FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                ))
             }
 
             override fun onHideCustomView() {
                 if (customView == null) return
-                val decor = window.decorView as ViewGroup
-                decor.removeView(customView)
+                cursorLayout.removeView(customView)
                 customView = null
                 webView.visibility = View.VISIBLE
                 customViewCallback?.onCustomViewHidden()
@@ -141,7 +144,7 @@ class MainActivity : Activity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_SETTINGS) {
             cursorLayout.toggleMode()
-            return typeOfKey() // true
+            return true
         }
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -156,9 +159,5 @@ class MainActivity : Activity() {
             }
         }
         return super.onKeyDown(keyCode, event)
-    }
-
-    private fun typeOfKey(): Boolean {
-        return true
     }
 }
