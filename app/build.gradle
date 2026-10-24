@@ -3,11 +3,11 @@ plugins {
     id 'kotlin-android'
 }
 android {
-    compileSdk 33
+    compileSdk 34
     defaultConfig {
         applicationId "com.personalbotai.idlix"
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
     }
@@ -19,5 +19,5 @@ android {
     }
 }
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
 }
