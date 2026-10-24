@@ -9,12 +9,13 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.webkit.WebView
 import android.widget.FrameLayout
 
 class CursorLayout(context: Context) : FrameLayout(context) {
     private var cursorX = 640f
     private var cursorY = 360f
-    private val cursorRadius = 10f
+    private val cursorRadius = 8f
     private var isVisible = false
     private val handler = Handler(Looper.getMainLooper())
 
@@ -32,7 +33,7 @@ class CursorLayout(context: Context) : FrameLayout(context) {
         color = Color.BLACK
         isAntiAlias = true
         style = Paint.Style.STROKE
-        strokeWidth = 3f
+        strokeWidth = 2.5f
     }
 
     init {
@@ -44,21 +45,29 @@ class CursorLayout(context: Context) : FrameLayout(context) {
         isVisible = true
         invalidate()
         handler.removeCallbacks(hideCursorRunnable)
-        // Kursor otomatis hilang sendiri setelah 2.5 detik diam
         handler.postDelayed(hideCursorRunnable, 2500)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
-            val step = 40f
+            // Langkah diperhalus agar pergerakan presisi dan tidak lompat jauh
+            val step = 15f
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP -> {
                     cursorY = (cursorY - step).coerceAtLeast(0f)
+                    // Jika kursor mendekati batas atas layar, scroll web perlahan
+                    if (cursorY < 120f) {
+                        scrollWebViewBy(0, -60)
+                    }
                     showAndScheduleHide()
                     return true
                 }
                 KeyEvent.KEYCODE_DPAD_DOWN -> {
                     cursorY = (cursorY + step).coerceAtMost(height.toFloat())
+                    // Jika kursor mendekati batas bawah layar, scroll web perlahan
+                    if (cursorY > height - 120f) {
+                        scrollWebViewBy(0, 60)
+                    }
                     showAndScheduleHide()
                     return true
                 }
@@ -80,6 +89,16 @@ class CursorLayout(context: Context) : FrameLayout(context) {
             }
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun scrollWebViewBy(dx: Int, dy: Int) {
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            if (child is WebView) {
+                child.scrollBy(dx, dy)
+                break
+            }
+        }
     }
 
     private fun simulateClick(x: Float, y: Float) {
