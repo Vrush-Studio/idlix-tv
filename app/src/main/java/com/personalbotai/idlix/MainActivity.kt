@@ -44,7 +44,11 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         
         cursorLayout = CursorLayout(this)
-        webView = WebView(this)
+        webView = WebView(this).apply {
+            isFocusable = true
+            isFocusableInTouchMode = true
+        }
+        cursorLayout.webViewRef = webView
 
         val params = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -52,12 +56,12 @@ class MainActivity : Activity() {
         )
         cursorLayout.addView(webView, params)
 
-        // Indikator mode kursor vs d-pad kecil
+        // Indikator mode
         modeIndicator = TextView(this).apply {
             setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#99000000"))
-            setPadding(16, 8, 16, 8)
-            textSize = 12f
+            setBackgroundColor(Color.parseColor("#CC000000"))
+            setPadding(20, 10, 20, 10)
+            textSize = 13f
             visibility = View.GONE
         }
         val indicatorParams = FrameLayout.LayoutParams(
@@ -65,13 +69,14 @@ class MainActivity : Activity() {
             FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
             gravity = Gravity.TOP or Gravity.END
-            setMargins(0, 20, 20, 0)
+            setMargins(0, 24, 24, 0)
         }
         cursorLayout.addView(modeIndicator, indicatorParams)
 
-        cursorLayout.onModeToggle = {
+        cursorLayout.onModeToggle = { isCursor ->
             modeIndicator.visibility = View.VISIBLE
-            modeIndicator.text = "Mode Ditukar (Tekan Menu)"
+            modeIndicator.text = if (isCursor) "Mode: Kursor Virtual" else "Mode: D-Pad Biasa"
+            modeIndicator.removeCallbacks(null)
             modeIndicator.postDelayed({ modeIndicator.visibility = View.GONE }, 2000)
         }
 
@@ -112,8 +117,6 @@ class MainActivity : Activity() {
                 }
                 customView = view
                 customViewCallback = callback
-                
-                // Saat masuk fullscreen video, tetap biarkan kursor virtual berada di atas video
                 webView.visibility = View.GONE
                 val decor = window.decorView as ViewGroup
                 decor.addView(customView, 0, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
@@ -133,6 +136,12 @@ class MainActivity : Activity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        // Tangkap juga tombol Menu di level Activity untuk kepastian 100%
+        if (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_SETTINGS) {
+            cursorLayout.toggleMode()
+            return true
+        }
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (customView != null) {
                 val client = webView.webChromeClient

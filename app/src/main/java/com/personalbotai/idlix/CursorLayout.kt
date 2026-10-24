@@ -17,10 +17,12 @@ class CursorLayout(context: Context) : FrameLayout(context) {
     private var cursorY = 360f
     private val cursorRadius = 8f
     private var isVisible = false
-    private var isCursorMode = true // true = Virtual Cursor, false = D-Pad Native
+    var isCursorMode = true
+        private set
     private val handler = Handler(Looper.getMainLooper())
 
-    var onModeToggle: (() -> Unit)? = null
+    var onModeToggle: ((Boolean) -> Unit)? = null
+    var webViewRef: WebView? = null
 
     private val hideCursorRunnable = Runnable {
         if (isCursorMode) {
@@ -44,6 +46,7 @@ class CursorLayout(context: Context) : FrameLayout(context) {
     init {
         isFocusable = true
         isFocusableInTouchMode = true
+        descendantFocusability = FOCUS_AFTER_DESCENDANTS
     }
 
     private fun showAndScheduleHide() {
@@ -56,25 +59,43 @@ class CursorLayout(context: Context) : FrameLayout(context) {
 
     fun toggleMode() {
         isCursorMode = !isCursorMode
-        isVisible = isCursorMode
-        invalidate()
+        if (isCursorMode) {
+            // Mode Kursor: Layout yang pegang fokus input
+            isFocusable = true
+            isFocusableInTouchMode = true
+            requestFocus()
+            showAndScheduleHide()
+        } else {
+            // Mode D-Pad: Sembunyikan kursor dan oper fokus langsung ke WebView
+            isVisible = false
+            invalidate()
+            isFocusable = false
+            isFocusableInTouchMode = false
+            webViewRef?.let {
+                it.isFocusable = true
+                it.isFocusableInTouchMode = true
+                it.requestFocus()
+            }
+        }
+        onModeToggle?.invoke(isCursorMode)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // Cek tombol toggle MENU
         if (event.action == KeyEvent.ACTION_DOWN) {
-            // Tangkap tombol MENU untuk switch mode
             if (event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_SETTINGS) {
                 toggleMode()
-                onModeToggle?.invoke()
                 return true
             }
+        }
 
-            // Jika mode D-Pad native aktif, serahkan langsung ke WebView/sistem
-            if (!isCursorMode) {
-                return super.dispatchKeyEvent(event)
-            }
+        // Jika mode D-Pad aktif, biarkan WebView yang menangani semua tombol arah
+        if (!isCursorMode) {
+            return super.dispatchKeyEvent(event)
+        }
 
-            // Mode Virtual Cursor aktif
+        // Jika mode Kursor aktif
+        if (event.action == KeyEvent.ACTION_DOWN) {
             val step = 15f
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP -> {
@@ -110,13 +131,7 @@ class CursorLayout(context: Context) : FrameLayout(context) {
     }
 
     private fun scrollWebViewBy(dx: Int, dy: Int) {
-        for (i in 0 until childCount) {
-            val child = getChildAt(i)
-            if (child is WebView) {
-                child.scrollBy(dx, dy)
-                break
-            }
-        }
+        webViewRef?.scrollBy(dx, dy)
     }
 
     private fun simulateClick(x: Float, y: Float) {
