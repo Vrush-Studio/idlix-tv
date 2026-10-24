@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -43,6 +44,9 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Kunci agar layar TIDAK PERNAH masuk screensaver atau sleep selama aplikasi IDLIX terbuka
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         cursorLayout = CursorLayout(this)
         webView = WebView(this).apply {
             isFocusable = true
@@ -56,7 +60,6 @@ class MainActivity : Activity() {
         )
         cursorLayout.addView(webView, params)
 
-        // Indikator mode
         modeIndicator = TextView(this).apply {
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.parseColor("#CC000000"))
@@ -136,10 +139,9 @@ class MainActivity : Activity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // Tangkap juga tombol Menu di level Activity untuk kepastian 100%
         if (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_SETTINGS) {
             cursorLayout.toggleMode()
-            return true
+            return typeOfKey() // true
         }
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -154,5 +156,9 @@ class MainActivity : Activity() {
             }
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    private fun typeOfKey(): Boolean {
+        return true
     }
 }
